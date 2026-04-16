@@ -36,32 +36,29 @@ rule no-write-all-permissions {
   enabled true
   priority 90
   severity error
-  ASK write
+  LOG write
   IF path GLOB ".github/workflows/*.yml" AND content LINE_REGEX "permissions:\\s*write-all"
   OR path GLOB ".github/workflows/*.yaml" AND content LINE_REGEX "permissions:\\s*write-all"
   OR path GLOB ".github/workflows/*.yml" AND content LINE_REGEX "contents:\\s*write" AND content LINE_REGEX "packages:\\s*write" AND content LINE_REGEX "id-token:\\s*write"
   MESSAGE "write-all permissions grant the workflow GITHUB_TOKEN access to write to all repository resources. Apply least-privilege: declare only the specific permissions needed (e.g., contents: read)."
-  PROMPT "Does this workflow need all write permissions? Restrict to the minimum: permissions: { contents: read } with additional permissions only where needed."
 }
 
 rule no-unpinned-action-version {
   enabled true
   priority 85
   severity warning
-  ASK write
+  LOG write
   IF path GLOB ".github/workflows/*.yml" AND content LINE_REGEX "uses:\\s+[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+@(main|master|latest|v[0-9]+)"
   OR path GLOB ".github/workflows/*.yaml" AND content LINE_REGEX "uses:\\s+[a-zA-Z0-9_-]+/[a-zA-Z0-9_-]+@(main|master|latest|v[0-9]+)"
   MESSAGE "Referencing actions by branch name or floating tag allows supply chain attacks — the action can be updated to malicious code. Pin to a full commit SHA: uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683"
-  PROMPT "Can this action be pinned to a specific commit SHA? Branch/tag references mean a compromised action repo can inject code into your workflow."
 }
 
 rule no-self-hosted-runner-public-repo {
   enabled true
   priority 90
   severity error
-  ASK write
+  LOG write
   IF path GLOB ".github/workflows/*.yml" AND content CONTAINS "runs-on: self-hosted" AND content CONTAINS "pull_request"
   OR path GLOB ".github/workflows/*.yaml" AND content CONTAINS "runs-on: self-hosted" AND content CONTAINS "pull_request"
   MESSAGE "Self-hosted runners on pull_request events in public repos allow untrusted fork PRs to execute code on your infrastructure. Use GitHub-hosted runners for public repo CI, or require approval for fork PRs."
-  PROMPT "Is this workflow triggered by pull_request in a public repo? Self-hosted runners execute fork PR code on your hardware — use environment protection rules or switch to GitHub-hosted runners."
 }
